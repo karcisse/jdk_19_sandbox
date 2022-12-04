@@ -1,7 +1,10 @@
+import rx.Observable;
+import rx.schedulers.Schedulers;
 import threads.SquareTask;
 
 import java.util.Collection;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
 public class VirtualThreadsSandbox implements Sandbox {
@@ -10,10 +13,11 @@ public class VirtualThreadsSandbox implements Sandbox {
         Collection<SquareTask> tasks = IntStream.rangeClosed(1, 1000)
                 .boxed()
                 .map(SquareTask::new).toList();
-        long oldFashionTime = oldFashionThreads(tasks);
-        long virtualTime = virtualThreads(tasks);
+        long time = oldFashionThreads(tasks);
+//        long time = virtualThreads(tasks);
+//        long time = reactiveTasks(tasks);
 
-        System.out.printf("Old fashioned threads -> %dms%nVirtual threads -> %dms%n", oldFashionTime, virtualTime);
+        System.out.printf("TIME -> %dms%n", time);
     }
 
     private <T extends Callable<Integer>> long oldFashionThreads(Collection<T> tasks) {
@@ -22,6 +26,36 @@ public class VirtualThreadsSandbox implements Sandbox {
 
     private <T extends Callable<Integer>> long virtualThreads(Collection<T> tasks) {
         return executeTasks(tasks, Executors.newVirtualThreadPerTaskExecutor());
+    }
+
+    private <T extends Callable<Integer>> long reactiveTasks(Collection<T> tasks) {
+        long startTimestamp = System.currentTimeMillis();
+
+        long sum = 0;
+        AtomicLong end = new AtomicLong();
+
+        Observable.from(tasks)
+                .flatMap(task -> Observable.fromCallable(task)
+                        .subscribeOn(Schedulers.io())
+                )
+                .subscribe(
+                        onNext -> { },
+                        onNext -> { },
+                        () -> {
+                            System.out.printf("Real time -> %d%n", System.currentTimeMillis() - startTimestamp);
+                            end.set(System.currentTimeMillis());
+                        });
+
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        long time = end.get() - startTimestamp;
+        System.out.printf("Time = %dms - Sum = %d%n", time, sum);
+
+        return time;
     }
 
     private <T extends Callable<Integer>> long executeTasks(Collection<T> tasks, ExecutorService executor) {
