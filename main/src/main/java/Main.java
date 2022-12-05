@@ -4,7 +4,8 @@ public class Main {
 
         Sandbox sandbox;
 
-        sandbox = new VirtualThreadsSandbox();
+//        sandbox = new VirtualThreadsSandbox();
+        sandbox = new ForeignFunctionAndMemoryAPISandbox();
 
         sandbox.play();
     }
