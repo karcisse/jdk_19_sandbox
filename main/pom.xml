@@ -32,16 +32,24 @@
                 <configuration>
                     <release>${maven.compiler.source}</release>
                     <compilerArgs>
-                        --enable-preview
+                        <arg>--enable-preview</arg>
+                        <arg>--add-modules=jdk.incubator.concurrent</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M3</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
                 <configuration>
-                    <argLine>--enable-preview</argLine>
+                    <executable>${java.home}/bin/java</executable>
+                    <arguments>
+                        <argument>--add-modules=jdk.incubator.concurrent</argument>
+                        <argument>--enable-preview</argument>
+                        <argument>--class-path</argument>
+                        <classpath/>
+                        <argument>Main</argument>
+                    </arguments>
                 </configuration>
             </plugin>
         </plugins>
