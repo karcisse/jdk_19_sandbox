@@ -1,8 +1,7 @@
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 
-import static java.lang.foreign.ValueLayout.ADDRESS;
-import static java.lang.foreign.ValueLayout.JAVA_LONG;
+import static java.lang.foreign.ValueLayout.*;
 
 public class ForeignFunctionAndMemoryAPISandbox implements Sandbox {
     @Override
@@ -27,6 +26,23 @@ public class ForeignFunctionAndMemoryAPISandbox implements Sandbox {
             throw new RuntimeException(e);
         }
 
-        System.out.printf("len = %d%n", len);
+       printf("foreign call len = %d\n", len);
+    }
+
+    private void printf(String format, Long value) {
+        SymbolLookup stdlib = Linker.nativeLinker().defaultLookup();
+        MethodHandle printf = Linker.nativeLinker().downcallHandle(
+                stdlib.lookup("printf").orElseThrow(),
+                FunctionDescriptor.of(JAVA_INT, ADDRESS).asVariadic(JAVA_LONG)
+        );
+
+        SegmentAllocator malloc = SegmentAllocator.implicitAllocator();
+
+        try {
+            MemorySegment s = malloc.allocateUtf8String(format);
+            printf.invoke(s, value);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
     }
 }
