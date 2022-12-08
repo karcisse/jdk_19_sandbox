@@ -13,11 +13,38 @@ public class VirtualThreadsSandbox implements Sandbox {
         Collection<SquareTask> tasks = IntStream.rangeClosed(1, 1000)
                 .boxed()
                 .map(SquareTask::new).toList();
+//        long time = 0;
         long time = oldFashionThreads(tasks);
 //        long time = virtualThreads(tasks);
 //        long time = reactiveTasks(tasks);
 
+//        createTasksWithBuilder(tasks);
+//        singleVirtualThread(() -> new SquareTask(12).call());
+
         System.out.printf("TIME -> %dms%n", time);
+    }
+
+    private void singleVirtualThread(Runnable task) {
+//        Thread.startVirtualThread(task);
+
+        Thread.ofVirtual()
+                .name("I AM VIRTUAL TASK!")
+                .start(task);
+        Thread.ofPlatform()
+                .name("I AM PLATFORM TASK!")
+                .start(task);
+    }
+
+    private <T extends Callable<Integer>> void createTasksWithBuilder(Collection<T> tasks) {
+        tasks.forEach(t -> Thread.ofVirtual()
+                        .start(() -> {
+                            try {
+                                t.call();
+                            } catch (Exception e) {
+                                // ignore
+                            }
+                        }));
+
     }
 
     private <T extends Callable<Integer>> long oldFashionThreads(Collection<T> tasks) {
