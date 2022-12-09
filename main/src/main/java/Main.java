@@ -5,8 +5,10 @@ public class Main {
         Sandbox sandbox;
 
 //        sandbox = new VirtualThreadsSandbox();
-        sandbox = new ForeignFunctionAndMemoryAPISandbox();
+//        sandbox = new ForeignFunctionAndMemoryAPISandbox();
 //        sandbox = new StructureConcurrencySandbox();
+//        sandbox = new PatternMatchingSandbox();
+        sandbox = new RecordPatternSandbox();
 
         sandbox.play();
     }
