@@ -1,4 +1,5 @@
 import jdk.incubator.concurrent.StructuredTaskScope;
+import org.junit.Test;
 import threads.FailingTask;
 import threads.PrettyTextTask;
 import threads.SqrtTask;
@@ -9,20 +10,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class StructureConcurrencySandbox implements Sandbox {
-    @Override
-    public void play() {
-        try {
-//            oldFashionedConcurrency();
-//            structuredConcurrency();
-            oldFashionedConcurrencyFailing();
-//            structuredConcurrencyFailing();
-        } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
+public class StructuredConcurrencyTest {
 
-    private void oldFashionedConcurrency() throws ExecutionException, InterruptedException {
+    @Test
+    public void oldFashionedConcurrency() throws ExecutionException, InterruptedException {
         try (ExecutorService executor = Executors.newCachedThreadPool()) {
             Future<Integer> squareFuture = executor.submit(new SquareTask(12));
             Future<Integer> sqrtFuture = executor.submit(new SqrtTask(144, 2000));
@@ -36,7 +27,8 @@ public class StructureConcurrencySandbox implements Sandbox {
         }
     }
 
-    private void structuredConcurrency() throws ExecutionException, InterruptedException {
+    @Test
+    public void structuredConcurrency() throws InterruptedException, ExecutionException {
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
             Future<Integer> squareFuture = scope.fork(new SquareTask(12));
             Future<Integer> sqrtFuture = scope.fork(new SqrtTask(144, 2000));
@@ -53,25 +45,35 @@ public class StructureConcurrencySandbox implements Sandbox {
         }
     }
 
-    private void oldFashionedConcurrencyFailing() throws ExecutionException, InterruptedException {
+    @Test(expected = ExecutionException.class)
+    public void oldFashionedConcurrencyFailing() throws ExecutionException, InterruptedException {
         try (ExecutorService executor = Executors.newCachedThreadPool()) {
-            Future<Integer> squareFuture = executor.submit(new SquareTask(12, 500));
+            Future<Integer> squareFuture = executor.submit(new SquareTask(12, 1000));
             Future<Integer> sqrtFuture = executor.submit(new SqrtTask(144, 2000));
-            Future<Void> voidFuture = executor.submit(new FailingTask(null, 1000));
+            Future<Void> voidFuture = executor.submit(new FailingTask(null, 500));
 
-            Integer square = squareFuture.get();
-            Integer sqrt = sqrtFuture.get();
-            Void unused = voidFuture.get();
+            Integer square = 0;
+            Integer sqrt = 0;
+            Void unused = null;
+            try {
+                square = squareFuture.get();
+                sqrt = sqrtFuture.get();
+                unused = voidFuture.get();
+            } catch (ExecutionException e) {
+                System.out.printf("There was an exception %s%n", e.getMessage());
+                throw e;
+            }
 
             System.out.printf("SQUARE = %d ; SQRT = %d ; TEXT = %s ;%n", square, sqrt, unused);
         }
     }
 
-    private void structuredConcurrencyFailing() throws ExecutionException, InterruptedException {
+    @Test(expected = ExecutionException.class)
+    public void structuredConcurrencyFailing() throws InterruptedException, ExecutionException {
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<Integer> squareFuture = scope.fork(new SquareTask(12, 500));
+            Future<Integer> squareFuture = scope.fork(new SquareTask(12, 1000));
             Future<Integer> sqrtFuture = scope.fork(new SqrtTask(144, 2000));
-            Future<Void> voidFuture = scope.fork(new FailingTask(null, 1000));
+            Future<Void> voidFuture = scope.fork(new FailingTask(null, 500));
 
             scope.join();
             scope.throwIfFailed();
@@ -83,4 +85,6 @@ public class StructureConcurrencySandbox implements Sandbox {
             System.out.printf("SQUARE = %d ; SQRT = %d ; TEXT = %s ;%n", square, sqrt, unused);
         }
     }
+
+
 }

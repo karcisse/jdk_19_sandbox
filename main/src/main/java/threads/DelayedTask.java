@@ -26,7 +26,7 @@ public abstract class DelayedTask<T> implements Callable<T> {
         try {
             Thread.sleep(delay);
         } catch (InterruptedException e) {
-            System.out.printf("Thread %s - Task %s - ERROR%n",
+            System.out.printf("Thread %s - Task %s - INTERRUPTED%n",
                     Thread.currentThread().getName(), id);
             return null;
         }
