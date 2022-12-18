@@ -1,4 +1,4 @@
 package records;
 
-public record Person(BaseData baseData, Address address) {
+public record Person(BaseData baseData, Gender gender, Address address) {
 }
