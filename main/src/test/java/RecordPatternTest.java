@@ -59,6 +59,32 @@ public class RecordPatternTest {
     }
 
     //region Why this is useful
+
+    @Test
+    public void whyThisIsUsefulOld() {
+        Address familyAddress = new Address("Spooner Street", 31, 1, "QUA-1234");
+        Person father = new Person(
+                new BaseData("Peter", "Griffin", 45),
+                Gender.MALE,
+                familyAddress);
+        Person mother = new Person(
+                new BaseData("Lois", "Griffin", 40),
+                Gender.FEMALE,
+                familyAddress);
+        Person son = new Person(
+                new BaseData("Chris", "Griffin", 14),
+                Gender.MALE,
+                familyAddress);
+        Person daughter = new Person(
+                new BaseData("Meg", "Griffin", 16),
+                Gender.FEMALE,
+                familyAddress);
+        handlePersonOld(father);
+        handlePersonOld(mother);
+        handlePersonOld(son);
+        handlePersonOld(daughter);
+    }
+
     @Test
     public void whyThisIsUseful() {
         Address familyAddress = new Address("Spooner Street", 31, 1, "QUA-1234");
@@ -98,6 +124,28 @@ public class RecordPatternTest {
             case Person person
                     when Gender.FEMALE.equals(person.gender())
                     -> processFemale(person);
+            default -> {}
+        }
+    }
+
+    private void handlePersonOld(Object personData) {
+        switch (personData) {
+            case Person person -> {
+                if (Gender.MALE.equals(person.gender())) {
+                    if (person.baseData().age() < 18) {
+                        processBoy(person);
+                    } else {
+                        processMale(person);
+                    }
+                } else if (Gender.FEMALE.equals(person.gender())) {
+                    if (person.baseData().age() < 18) {
+                        processGirl(person);
+                    } else {
+                        processFemale(person);
+                    }
+                }
+            }
+            case null -> System.out.println("NULL");
             default -> {}
         }
     }
